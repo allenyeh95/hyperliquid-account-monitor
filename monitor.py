@@ -12,7 +12,6 @@ class HyperliquidMonitor:
         self.equity_history = []
         
     def get_account_info(self):
-        """Fetch account information"""
         try:
             payload = {
                 "type": "clearinghouseState",
@@ -80,7 +79,6 @@ class HyperliquidMonitor:
         return total_value
     
     def display_positions(self, positions):
-        """Display position information"""
         os.system('cls' if os.name == 'nt' else 'clear')
         print("=" * 70)
         print(f"HYPERLIQUID ACCOUNT MONITOR")
