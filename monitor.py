@@ -1,7 +1,6 @@
 import requests
 import time
 import pandas as pd
-import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import os
 
@@ -12,6 +11,7 @@ class HyperliquidMonitor:
         self.equity_history = []
         
     def get_account_info(self):
+        """Fetch account information"""
         try:
             payload = {
                 "type": "clearinghouseState",
@@ -79,6 +79,7 @@ class HyperliquidMonitor:
         return total_value
     
     def display_positions(self, positions):
+        """Display position information"""
         os.system('cls' if os.name == 'nt' else 'clear')
         print("=" * 70)
         print(f"HYPERLIQUID ACCOUNT MONITOR")
@@ -114,67 +115,8 @@ class HyperliquidMonitor:
             print(f"{pos['symbol']:<12} {direction_text:<20} {pos['size']:<15.4f} "
                   f"${pos['entry_price']:<14.2f} {pnl_text:<20}")
     
-    def plot_account_value(self):
-        """Plot 7-day account value chart"""
-        if len(self.equity_history) < 2:
-            print("Insufficient data for chart")
-            return
-        
-        # Prepare data
-        df = pd.DataFrame(self.equity_history)
-        df.set_index('timestamp', inplace=True)
-        
-        # Create chart
-        plt.figure(figsize=(12, 6))
-        plt.plot(df.index, df['value'], 'b-', linewidth=2.5, label='Account Value')
-        
-        # Fill area under curve
-        plt.fill_between(df.index, df['value'], alpha=0.2)
-        
-        # Format chart
-        plt.title('7-Day Account Value History', fontsize=16, fontweight='bold', pad=20)
-        plt.xlabel('Date & Time', fontsize=12)
-        plt.ylabel('Account Value (USD)', fontsize=12)
-        plt.grid(True, alpha=0.3, linestyle='--')
-        
-        # Format axes
-        plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
-        plt.gcf().autofmt_xdate()
-        
-        # Add latest value annotation
-        latest_value = df['value'].iloc[-1]
-        plt.annotate(f'Current: ${latest_value:,.2f}', 
-                    xy=(df.index[-1], latest_value),
-                    xytext=(10, 10), textcoords='offset points',
-                    fontsize=11, fontweight='bold',
-                    bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.8))
-        
-        # Add statistics
-        if len(df) > 0:
-            max_val = df['value'].max()
-            min_val = df['value'].min()
-            change = ((latest_value - df['value'].iloc[0]) / df['value'].iloc[0] * 100) if df['value'].iloc[0] != 0 else 0
-            
-            stats_text = f"Max: ${max_val:,.2f}\nMin: ${min_val:,.2f}\nChange: {change:+.2f}%"
-            plt.text(0.02, 0.98, stats_text, transform=plt.gca().transAxes,
-                    fontsize=10, verticalalignment='top',
-                    bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.7))
-        
-        plt.legend()
-        plt.tight_layout()
-        
-        # Save chart
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"account_value_{timestamp}.png"
-        plt.savefig(filename, dpi=120)
-        plt.close()
-        
-        print(f"\n📊 Chart saved: {filename}")
-    
-    def monitor(self, update_interval=10, plot_interval=300):
+    def monitor(self, update_interval=10):
         """Main monitoring loop"""
-        last_plot_time = time.time()
-        
         print(f"\nStarting account monitoring... (Update interval: {update_interval}s)")
         print("Press Ctrl+C to stop\n")
         
@@ -182,14 +124,6 @@ class HyperliquidMonitor:
             while True:
                 positions = self.get_positions()
                 self.display_positions(positions)
-                
-                # Generate chart periodically
-                current_time = time.time()
-                if current_time - last_plot_time >= plot_interval:
-                    print("\n" + "-" * 70)
-                    print("Generating 7-day account value chart...")
-                    self.plot_account_value()
-                    last_plot_time = current_time
                 
                 # Show next update time
                 next_update = datetime.now() + timedelta(seconds=update_interval)
@@ -200,10 +134,6 @@ class HyperliquidMonitor:
                 
         except KeyboardInterrupt:
             print("\n\n🛑 Monitoring stopped")
-            # Generate final chart before exit
-            if self.equity_history:
-                print("Generating final chart...")
-                self.plot_account_value()
 
 def main():
     """Main program"""
@@ -238,7 +168,7 @@ def main():
     time.sleep(2)
     
     # Start monitoring
-    monitor.monitor(update_interval=10, plot_interval=300)
+    monitor.monitor(update_interval=10)
 
 if __name__ == "__main__":
     main()
